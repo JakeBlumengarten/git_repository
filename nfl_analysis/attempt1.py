@@ -38,4 +38,3 @@ plt.xticks(weeks)
 
 # plt.savefig("chicago_yards_by_week.png")
 plt.show()
-
