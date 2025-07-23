@@ -4,10 +4,29 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r, echo = True}
+```{r, include = FALSE}
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
+library(nflplotR)
 
-season_24 <- read.csv('2024.csv')
+season_24 <- read.csv("2024.csv")
 ```
+
+## Yards By week for The Chicago Bears
+```{r}
+chicago_bears_24 <- season_24 %>%
+  filter(posteam == "CHI") %>%
+  select(week, yards_gained) %>%
+  group_by(week) %>%
+  summarize(yards_per_week = sum(yards_gained, na.rm = TRUE))
+
+head(chicago_bears_24)
+```
+
+
+```{r}
+ggplot(chicago_bears_24, aes(x = week, y = yards_per_week)) +
+  geom_line()
+```
+
