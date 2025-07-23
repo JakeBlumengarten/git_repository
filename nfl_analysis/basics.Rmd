@@ -1,0 +1,13 @@
+---
+title: "R Football Analytics Basics"
+date: "`r Sys.Date()`" 
+output: html_document
+---
+
+```{r, echo = True}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+
+season_24 <- read.csv('2024.csv')
+```
