@@ -1,5 +1,6 @@
 ---
 title: "R Football Analytics Basics"
+author : "Jake Blumengar"
 date: "`r Sys.Date()`" 
 output: html_document
 ---
@@ -9,6 +10,7 @@ library(dplyr)
 library(ggplot2)
 library(tidyverse)
 library(nflplotR)
+library(nflreadr)
 
 season_24 <- read.csv("2024.csv")
 ```
@@ -27,6 +29,29 @@ head(chicago_bears_24)
 
 ```{r}
 ggplot(chicago_bears_24, aes(x = week, y = yards_per_week)) +
-  geom_line()
+  geom_line(color = "navy", size = 1.2) + # Added some basic styling
+  geom_point(color = "orange", size = 3) +
+  labs(
+    title = "Chicago Bears Offensive Yards Per Week (2024 Season)",
+    x = "Week",
+    y = "Total Yards Gained"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
 ```
 
+```{r}
+yards_pg_pt <- season_24 %>%
+  filter() %>%
+  group_by(posteam) %>%
+  summarize(avgyards = (sum(yards_gained, na.rm = TRUE) / 17)) %>%
+  arrange(desc(avgyards))
+
+yards_pg_pt
+
+ggplot(yards_pg_pt, aes(x = avgyards, y = posteam))+
+  geom_col()
+```
