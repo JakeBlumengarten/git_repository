@@ -130,3 +130,42 @@ ggplot(yards_pg_pt, aes(x=avgyards, y= winpct))+
   )
 ggsave("ypg_winpct_corr.png", path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", width = 10, height = 10, dpi = 300)
 ```
+
+
+## Looking at QB Influence on Win Percentage
+```{r}
+qbs <- season_24 %>%
+  filter(!is.na(passer_player_name), !is.na(yards_gained)) %>%
+  filter(play_type == "pass")%>%
+  group_by(passer_player_name, passer_player_id, posteam) %>%
+  summarize(avg_yards = mean(yards_gained), plays = n(), .groups = "drop")%>%
+  filter(plays > 100, passer_player_name != "")%>%
+  arrange(desc(avg_yards))
+
+qbs <- qbs %>%
+  mutate(passer_player_name = fct_reorder(passer_player_name, avg_yards, .desc = TRUE))
+
+top_qbs <- qbs %>%
+  arrange(desc(avg_yards)) %>%
+  slice(1:15)
+```
+
+```{r}
+ggplot(top_qbs, aes(x= avg_yards, y= passer_player_id))+
+  geom_col(aes(color = posteam, fill = posteam), width = 0.5)+
+  scale_color_nfl(type="secondary")+
+  scale_fill_nfl(alpha = 0.4)+
+  theme_minimal()+
+  labs(
+    title = "Average Yards by QB",
+    x = "Average Yards",
+    subtitle = "Top 15",
+    caption = "Data: @nflfastR"
+  )+
+  theme(
+    plot.title = element_text(face = "bold"),
+    plot.tiele.position = "plot",
+    axis.title.y = element_blank(),
+    axis.text.y.left = element_nfl_headshot(size = 1)
+  )
+```
