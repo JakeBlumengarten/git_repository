@@ -12,6 +12,8 @@ library(tidyverse)
 library(nflplotR)
 library(nflreadr)
 
+setwd("/Users/jakeblumengarten/git_repository/nfl_analysis")
+
 season_24 <- read.csv("2024.csv")
 ```
 
@@ -41,17 +43,72 @@ ggplot(chicago_bears_24, aes(x = week, y = yards_per_week)) +
     plot.title = element_text(hjust = 0.5, face = "bold"),
     axis.title = element_text(face = "bold")
   )
+ggsave("chicago_yards_by_week_R.png")
 ```
 
 ```{r}
 yards_pg_pt <- season_24 %>%
-  filter() %>%
   group_by(posteam) %>%
   summarize(avgyards = (sum(yards_gained, na.rm = TRUE) / 17)) %>%
-  arrange(desc(avgyards))
-
-yards_pg_pt
+  arrange(desc(avgyards)) %>%
+  mutate(posteam = factor(posteam, levels = rev(posteam)))
 
 ggplot(yards_pg_pt, aes(x = avgyards, y = posteam))+
-  geom_col()
+  geom_col(fill = "#0000ff") +
+  labs(title = "Average Yards Per Team (2024 Season)",
+       x = "Average Yards Per Game",
+       y = "Team") +
+  theme_test()
+
+ggsave("average_yards_per_team24.png")
+```
+
+
+## Average Yards Per Game by Team
+```{r}
+yards_pg_pt <- season_24 %>%
+  filter(!is.na(yards_gained), !is.na(posteam)) %>%
+  group_by(posteam) %>%
+  summarize(avgyards = (sum(yards_gained, na.rm = TRUE) / 17), .groups = 'drop') %>%
+  mutate(clean_team_abbr = clean_team_abbrs(posteam)) %>%
+  filter(!is.na(clean_team_abbr)) %>%
+  arrange(desc(avgyards)) %>%
+  mutate(clean_team_abbr = factor(clean_team_abbr, levels = rev(clean_team_abbr))) %>%
+  filter(posteam != "")
+```
+
+```{r}
+teamsypg <- ggplot(yards_pg_pt, aes(x = avgyards, y = clean_team_abbr)) +
+  geom_col(aes(fill = clean_team_abbr, color = clean_team_abbr), width = .8) +
+  geom_nfl_logos(aes(x = 0, y = clean_team_abbr, team_abbr = clean_team_abbr),
+                           width = 0.03,
+                           hjust = 0,
+                           vjust = 0.5) +
+  geom_text(aes(x = 0, y = clean_team_abbr, label = clean_team_abbr),
+                     hjust = -0.5,
+                     vjust = 0.5,
+                     nudge_x = max(yards_pg_pt$avgyards, na.rm = TRUE) * 0.03,
+                     color = "white", size = 2.5) +
+  labs(
+    x = "Average Yards Per Game",
+    y = "Team",
+    title = "2024 NFL Team Average Yards Per Game",
+    subtitle = "Data derived from season_24"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    plot.title = element_text(face = "bold", hjust = 0),
+    plot.title.position = "plot",
+    plot.subtitle = element_text(hjust = 0),
+    plot.background = element_rect(fill = "#F0F0F0", color = NA),
+    legend.position = "none"
+  ) +
+  scale_fill_nfl() +
+  scale_color_nfl(type = "secondary")
+
+ggsave("teams_ypg.png", plot = teamsypg, width = 10, height = 10, dpi = 300)
 ```
