@@ -1,16 +1,20 @@
 ---
 title: "R Football Analytics Basics"
-author : "Jake Blumengar"
-date: "`r Sys.Date()`" 
-output: html_document
+author: "Jake Blumengar"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-```{r, include = FALSE}
+```{r}
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
 library(nflplotR)
 library(nflreadr)
+library(gganimate)
+
 
 setwd("/Users/jakeblumengarten/git_repository/nfl_analysis")
 
@@ -30,34 +34,56 @@ chicago_bears_24$winperc <- c((1/1), (1/2), (1/3), (2/4), (3/5), (4/6), (4/7), (
 
 
 ```{r}
-ggplot(chicago_bears_24, aes(x = week)) +
+# Team branding positions
+wordmarks <- tibble(
+  x = c(3.5, 17.5),
+  y = c(100, 400),
+  team_abbr = "CHI"
+)
+
+chicagoypw <- ggplot(chicago_bears_24, aes(x = week)) +
   geom_line(aes(y = yards_per_week), color = "#0B162A", size = 1.2) +
   geom_point(aes(y = yards_per_week), color = "#C83803", size = 2) +
-  geom_line(aes(y = winperc * max(yards_per_week)), color = "darkgreen", linetype = "dashed", size = 1) + 
+  geom_line(aes(y = winperc * max(yards_per_week)), 
+            color = "darkgreen", linetype = "dashed", size = 1) + 
   scale_y_continuous(
     name = "Total Yards Gained",
-    sec.axis = sec_axis(~./max(chicago_bears_24$yards_per_week), name = "Win Percentage")
+    breaks = seq(100, 500, 25),
+    sec.axis = sec_axis(
+      trans = ~ . / max(chicago_bears_24$yards_per_week),
+      name = "Win Percentage",
+      breaks = seq(0, 1.0, 0.1)
+    )
   ) +
-  labs(title = "Chicago Bears Offensive Yards & Win Percentage (2024 Season)",
-       x = "Week") +
+  scale_x_continuous(breaks = seq(1, 18, 1)) +
+  labs(
+    title = "Chicago Bears Offensive Yards & Win Percentage (2024 Season)",
+    x = "Week",
+    caption = "Data: @nflfastR\n* Dashed green line scaled to match yardage"
+  ) +
+  annotate("text", x = 13, y = 250, label = "Eberflus Fired", 
+           color = "#C83803", size = 5, angle = 75) +
+  annotate("text", x = 7, y = 250, label = "Bye Week", 
+           color = "#C83803", size = 5, angle = 75) +
+  geom_nfl_wordmarks(data = wordmarks[1, ], 
+                     aes(x = x, y = y, team_abbr = team_abbr), width = 0.35) +
+  geom_nfl_logos(data = wordmarks[2, ], 
+                 aes(x = x, y = y, team_abbr = team_abbr), width = 0.1) +
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5, face = "bold"),
     axis.title.y.left = element_text(color = "#0B162A", face = "bold"),
     axis.title.y.right = element_text(color = "darkgreen", face = "bold")
-  ) +
-  scale_x_continuous(breaks = seq(1, 18, 1))+
-  scale_y_continuous(
-  name = "Total Yards Gained",
-  breaks = seq(100, 500, 25),
-  sec.axis = sec_axis(
-    trans = ~ ./max(chicago_bears_24$yards_per_week),
-    name = "Win Percentage",
-    breaks = seq(0, 1.0, 0.1)
   )
-) +
-  annotate("text", x = 13, y = 250, label = "Eberflus Fired", color = "red", size = 5, fontface = "bold", angle = 75)
-ggsave("chicago_yards_by_week_R.png", path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/")
+
+ggsave("chicago_yards_by_week_R.png", 
+       plot = chicagoypw,
+       path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", 
+       width = 10, 
+       height = 10, 
+       dpi = 300,
+       bg = "white")
+chicagoypw
 ```
 
 ## Average Yards Per Game by Team
@@ -88,10 +114,11 @@ teamsypg <- ggplot(yards_pg_pt, aes(x = avgyards, y = posteam)) +
                      nudge_x = max(yards_pg_pt$avgyards, na.rm = TRUE) * 0.03,
                      color = "white", size = 2.5) +
   labs(
-    x = "Average Yards Per Game",
+    x = "Yards Per Game",
     y = "Team",
     title = "2024 NFL Team Average Yards Per Game",
-    subtitle = "Data derived from 2024 Season through NFLreadr"
+    subtitle = "Data derived from 2024 Season through NFLreadr",
+    caption = "Data: @nflfastR"
   ) +
   theme_minimal() +
   theme(
@@ -102,23 +129,29 @@ teamsypg <- ggplot(yards_pg_pt, aes(x = avgyards, y = posteam)) +
     plot.title = element_text(face = "bold", hjust = 0),
     plot.title.position = "plot",
     plot.subtitle = element_text(hjust = 0),
-    plot.background = element_rect(fill = "#F0F0F0", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
     legend.position = "none"
   ) +
   scale_fill_nfl() +
   scale_color_nfl(type = "secondary")
 teamsypg
 
-ggsave("teams_ypg.png", path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", plot = teamsypg, width = 10, height = 10, dpi = 300)
+ggsave("teams_ypg.png", 
+       path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", 
+       plot = teamsypg, 
+       width = 10, 
+       height = 10, 
+       dpi = 300,
+       bg = "white")
 ```
 ## Correlation Between Average Yards and Winning Percentage
 ```{r}
-ggplot(yards_pg_pt, aes(x=avgyards, y= winpct))+
+ypg_winpct <- ggplot(yards_pg_pt, aes(x=avgyards, y= winpct))+
   geom_point()+
   geom_smooth(method = "lm", se = F)+
   geom_nfl_logos(aes(team_abbr = posteam), width = 0.065, alpha = 1) +
   labs(
-    x= "Average Yards Per Game",
+    x= "Yards Per Game",
     y= "Win Percentage",
     caption = "Data: @nflfastR",
     title = "2024 NFL Correlation Between Avg Yards Per Game and Win Percentage"
@@ -130,15 +163,23 @@ ggplot(yards_pg_pt, aes(x=avgyards, y= winpct))+
   )+
   scale_x_continuous(breaks = seq(250, 500, 25))+
   scale_y_continuous(breaks = seq(0,1,0.1))
-ggsave("ypg_winpct_corr.png", path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", width = 10, height = 10, dpi = 300)
+ggsave("ypg_winpct_corr.png", 
+       plot = ypg_winpct,
+       path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", 
+       width = 10, 
+       height = 10, 
+       dpi = 300,
+       bg = "white")
+ypg_winpct
 ```
 
 
 ## Looking at QB Influence on Win Percentage
 ```{r}
 qbs <- season_24 %>%
-  filter(!is.na(passer_player_name), !is.na(yards_gained)) %>%
-  filter(play_type == "pass")%>%
+  filter(!is.na(passer_player_name), 
+         !is.na(yards_gained),
+         play_type == "pass") %>%
   group_by(passer_player_name, passer_player_id, posteam) %>%
   summarize(avg_yards = mean(yards_gained), plays = n(), .groups = "drop")%>%
   filter(plays > 100, passer_player_name != "")%>%
@@ -153,7 +194,7 @@ top_qbs <- qbs %>%
 ```
 
 ```{r}
-ggplot(top_qbs, aes(x= avg_yards, y= passer_player_id))+
+qbs_bar <- ggplot(top_qbs, aes(x= avg_yards, y= passer_player_id))+
   geom_col(aes(color = posteam, fill = posteam), width = 0.5)+
   scale_color_nfl(type="secondary")+
   scale_fill_nfl(alpha = 0.4)+
@@ -171,5 +212,13 @@ ggplot(top_qbs, aes(x= avg_yards, y= passer_player_id))+
     axis.text.y.left = element_nfl_headshot(size = 1)
   )+
   scale_x_continuous(breaks = seq(1, 10, 1))
-ggsave("averageydsqb.png", path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", width = 10, height = 10, dpi = 300)
+ggsave("averageydsqb.png", 
+       plot = qbs_bar,
+       path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", 
+       width = 10, 
+       height = 10, 
+       dpi = 300,
+       bg = "white")
+qbs_bar
 ```
+
