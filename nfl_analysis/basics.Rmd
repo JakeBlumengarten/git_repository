@@ -127,7 +127,9 @@ ggplot(yards_pg_pt, aes(x=avgyards, y= winpct))+
   theme(
     plot.title = element_text(face = "bold"),
     plot.title.position = "plot"
-  )
+  )+
+  scale_x_continuous(breaks = seq(250, 500, 25))+
+  scale_y_continuous(breaks = seq(0,1,0.1))
 ggsave("ypg_winpct_corr.png", path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", width = 10, height = 10, dpi = 300)
 ```
 
@@ -167,5 +169,7 @@ ggplot(top_qbs, aes(x= avg_yards, y= passer_player_id))+
     plot.tiele.position = "plot",
     axis.title.y = element_blank(),
     axis.text.y.left = element_nfl_headshot(size = 1)
-  )
+  )+
+  scale_x_continuous(breaks = seq(1, 10, 1))
+ggsave("averageydsqb.png", path = "/Users/jakeblumengarten/git_repository/nfl_analysis/plots/", width = 10, height = 10, dpi = 300)
 ```
